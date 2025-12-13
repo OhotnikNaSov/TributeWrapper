@@ -247,9 +247,8 @@ async def handle_webhook(request: Request):
     """
     Основной endpoint для приема webhook'ов от Tribute
     """
-    logger.info("\n" + "🌟" * 30)
+    logger.info("\n" + "🌟" * 15)
     logger.info("📨 ПОЛУЧЕН НОВЫЙ WEBHOOK ЗАПРОС")
-    logger.info("🌟" * 30)
     
     # Читаем тело запроса
     body = await request.body()
