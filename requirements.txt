@@ -1,0 +1,6 @@
+fastapi==0.115.5
+uvicorn==0.32.1
+pyyaml==6.0.2
+pymysql==1.1.1
+pymongo==4.10.1
+mcrcon==0.7.0

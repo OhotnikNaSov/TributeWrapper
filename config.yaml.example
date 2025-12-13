@@ -1,0 +1,108 @@
+# ========================================
+# Tribute Webhook Server Configuration
+# ========================================
+
+# --- Основные настройки сервера ---
+server:
+  host: "192.168.1.15"
+  port: 8080
+  debug: false  # true = полный debug лог каждого шага, false = только важные события
+
+# --- API ключ от Tribute ---
+tribute:
+  api_key: "457c2307-63aa-4c79-9fa1-dba28c89"  # Твой API ключ из Tribute Dashboard
+
+# --- Конвертация валют в донат-валюту (Рины) ---
+currency_rates:
+  RUB: 0.01    # 100 копеек (1₽) × 0.01 = 1 Рина
+  EUR: 1       # 100 центов (1€) × 1 = 100 Рин
+  USD: 1       # 100 центов (1$) × 1 = 100 Рин
+  UAH: 0.02    # 100 копеек (1₴) × 0.02 = 2 Рины
+
+# --- Настройки базы данных для Tribute логов ---
+# Поддерживается: mysql, sqlite, mongodb
+tribute_database:
+  type: "sqlite"  # mysql, sqlite, mongodb
+  
+  # SQLite настройки
+  sqlite:
+    path: "./data/tribute.db"
+  
+  # MySQL настройки
+  mysql:
+    host: "localhost"
+    port: 3306
+    user: "root"
+    password: "password"
+    database: "tribute"
+  
+  # MongoDB настройки
+  mongodb:
+    host: "localhost"
+    port: 27017
+    database: "tribute"
+    # user: "admin"      # раскомментируй если нужна авторизация
+    # password: "pass"
+
+# --- Настройки базы данных Minecraft (для донат-валюты - Устарело) ---
+# Оставлено для совместимости, но не используется
+minecraft_database:
+  type: "mysql"  # mysql, sqlite
+
+  # SQLite настройки
+  sqlite:
+    path: "./data/minecraft.db"
+
+  # MySQL настройки
+  mysql:
+    host: "localhost"
+    port: 3306
+    user: "minecraft"
+    password: "password"
+    database: "minecraft"
+
+  # Настройки таблицы и колонок для CoinsEngine или других Vault плагинов
+  table:
+    name: "coinsengine_balances"  # Название таблицы с балансами
+    player_column: "player_name"   # Колонка с именем игрока (может быть player_uuid для UUID)
+    currency_column: "balance"     # Колонка с балансом валюты
+    currency_name: "riny"          # Название валюты (для некоторых плагинов может быть отдельная колонка)
+
+  # Если твой плагин использует дополнительные колонки (например, тип валюты)
+  # Раскомментируй и настрой:
+  # extra_columns:
+  #   currency_type: "riny"  # Если есть колонка currency_type со значением "riny"
+
+# --- Настройки Minecraft RCON (для начисления валюты) ---
+# Используется для выполнения команд на сервере Minecraft
+minecraft_rcon:
+  host: "148.251.143.129"      # IP адрес Minecraft сервера
+  port: 25575            # RCON порт (стандартный 25575)
+  password: "kjkjkjirf225"  # RCON пароль из server.properties
+
+  # Команда для начисления валюты
+  # Доступные плейсхолдеры: %player_name%, %amount%
+  command: "testcont give  %player_name% %amount%"
+
+
+  # Паттерны успешного выполнения команды (если хоть один найден = успех)
+  # Оставь пустым [] если любой ответ считать успехом
+  # Поддерживаются плейсхолдеры: {player} - имя игрока, {amount} - количество валюты
+  # Примеры:
+  #   - "Added {amount}" - проверит "Added 500" для суммы 500
+  #   - "to {player}'s balance" - проверит "to OhotnikNaSov's balance"
+  #   - "successfully" - просто текст без плейсхолдеров
+  success_patterns:
+    - "Added {amount}ƒ to {player}'s balance"           # Для Testcont: "Added 500ƒ to OhotnikNaSov's balance"
+
+
+  # Паттерны ошибок (если хоть один найден = ошибка)
+  # Используется для определения неудачного выполнения
+  # Также поддерживаются плейсхолдеры {player} и {amount}
+  error_patterns:
+    - "player not found"
+    - "not online"
+    - "игрок не найден"
+    - "не в сети"
+    - "unknown command"
+    - "неизвестная команда"
