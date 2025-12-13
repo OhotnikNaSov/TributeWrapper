@@ -107,7 +107,10 @@ class RconManager:
         """
         # Очищаем Minecraft цветовые коды из ответа
         cleaned_response = self._strip_minecraft_colors(response)
-        response_lower = cleaned_response.lower()
+        
+        # Убираем запятые из чисел (5,347 -> 5347) для корректного сравнения
+        cleaned_response_no_commas = re.sub(r'(\d),(\d)', r'\1\2', cleaned_response)
+        response_lower = cleaned_response_no_commas.lower()
 
         self.logger.debug(f"🧹 Очищенный ответ: {cleaned_response}")
 
