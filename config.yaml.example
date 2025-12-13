@@ -10,7 +10,7 @@ server:
 
 # --- API ключ от Tribute ---
 tribute:
-  api_key: "457c2307-63aa-4c79-9fa1-dba28c89"  # Твой API ключ из Tribute Dashboard
+  api_key: "API_KEY"  # Твой API ключ из Tribute Dashboard
 
 # --- Конвертация валют в донат-валюту (Рины) ---
 currency_rates:
