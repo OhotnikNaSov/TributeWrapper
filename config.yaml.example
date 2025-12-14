@@ -4,13 +4,13 @@
 
 # --- Основные настройки сервера ---
 server:
-  host: "192.168.1.15"
-  port: 8080
-  debug: false  # true = полный debug лог каждого шага, false = только важные события
+  host: "0.0.0.0"  # Слушать на всех интерфейсах (для Docker/VPS)
+  port: 8888       # Порт сервера
+  debug: false     # true = полный debug лог каждого шага, false = только важные события
 
 # --- API ключ от Tribute ---
 tribute:
-  api_key: "API_KEY"  # Твой API ключ из Tribute Dashboard
+  api_key: "YOUR_API_KEY_HERE"  # Твой API ключ из Tribute Dashboard
 
 # --- Конвертация валют в донат-валюту (Рины) ---
 currency_rates:
@@ -33,7 +33,7 @@ tribute_database:
     host: "localhost"
     port: 3306
     user: "root"
-    password: "password"
+    password: "your_mysql_password"
     database: "tribute"
   
   # MongoDB настройки
@@ -58,7 +58,7 @@ minecraft_database:
     host: "localhost"
     port: 3306
     user: "minecraft"
-    password: "password"
+    password: "your_minecraft_db_password"
     database: "minecraft"
 
   # Настройки таблицы и колонок для CoinsEngine или других Vault плагинов
@@ -66,39 +66,29 @@ minecraft_database:
     name: "coinsengine_balances"  # Название таблицы с балансами
     player_column: "player_name"   # Колонка с именем игрока (может быть player_uuid для UUID)
     currency_column: "balance"     # Колонка с балансом валюты
-    currency_name: "riny"          # Название валюты (для некоторых плагинов может быть отдельная колонка)
-
-  # Если твой плагин использует дополнительные колонки (например, тип валюты)
-  # Раскомментируй и настрой:
-  # extra_columns:
-  #   currency_type: "riny"  # Если есть колонка currency_type со значением "riny"
+    currency_name: "riny"          # Название валюты
 
 # --- Настройки Minecraft RCON (для начисления валюты) ---
 # Используется для выполнения команд на сервере Minecraft
 minecraft_rcon:
-  host: "148.251.143.129"      # IP адрес Minecraft сервера
-  port: 25575            # RCON порт (стандартный 25575)
-  password: "kjkjkjirf225"  # RCON пароль из server.properties
+  host: "localhost"         # IP адрес Minecraft сервера
+  port: 25575               # RCON порт (стандартный 25575)
+  password: "your_rcon_password"  # RCON пароль из server.properties
 
   # Команда для начисления валюты
   # Доступные плейсхолдеры: %player_name%, %amount%
-  command: "testcont give  %player_name% %amount%"
-
+  command: "eco give %player_name% %amount%"
 
   # Паттерны успешного выполнения команды (если хоть один найден = успех)
   # Оставь пустым [] если любой ответ считать успехом
   # Поддерживаются плейсхолдеры: {player} - имя игрока, {amount} - количество валюты
-  # Примеры:
-  #   - "Added {amount}" - проверит "Added 500" для суммы 500
-  #   - "to {player}'s balance" - проверит "to OhotnikNaSov's balance"
-  #   - "successfully" - просто текст без плейсхолдеров
   success_patterns:
-    - "Added {amount}ƒ to {player}'s balance"           # Для Testcont: "Added 500ƒ to OhotnikNaSov's balance"
-
+    - "Added {amount}"
+    - "gave {amount}"
+    - "successfully"
+    - "успешно"
 
   # Паттерны ошибок (если хоть один найден = ошибка)
-  # Используется для определения неудачного выполнения
-  # Также поддерживаются плейсхолдеры {player} и {amount}
   error_patterns:
     - "player not found"
     - "not online"
