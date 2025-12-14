@@ -4,3 +4,4 @@ pyyaml==6.0.2
 pymysql==1.1.1
 pymongo==4.10.1
 mcrcon==0.7.0
+requests==2.32.3

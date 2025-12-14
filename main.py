@@ -16,6 +16,7 @@ from config_loader import load_config
 from database import DatabaseManager
 from rcon_manager import RconManager
 from logger import Logger
+from discord_notifier import DiscordNotifier
 
 # Загружаем конфигурацию
 config = load_config()
@@ -29,6 +30,12 @@ db_manager = DatabaseManager(config, logger)
 
 # Инициализируем RCON менеджер (для начисления валюты)
 rcon_manager = RconManager(config, logger)
+
+# Инициализируем Discord уведомления (для ошибок)
+discord_notifier = DiscordNotifier(
+    webhook_url=config.get('discord', {}).get('webhook_url', ''),
+    logger=logger
+)
 
 
 def verify_signature(request_body: bytes, signature: str, api_key: str) -> bool:
@@ -148,6 +155,20 @@ def process_new_donation(payload: Dict[str, Any]) -> Dict[str, Any]:
     
     if not player_name:
         logger.error("❌ Не удалось извлечь имя игрока из сообщения")
+
+        # Отправляем уведомление в Discord
+        discord_notifier.send_error_notification(
+            player_name=None,
+            amount=amount,
+            currency=currency,
+            game_currency=0,
+            error_reason="Не указано имя игрока в сообщении доната",
+            rcon_response=None,
+            user_id=user_id,
+            telegram_user_id=telegram_user_id,
+            donation_id=donation_id
+        )
+
         result = {
             'status': 'error',
             'reason': 'Не указано имя игрока в сообщении',
@@ -162,7 +183,7 @@ def process_new_donation(payload: Dict[str, Any]) -> Dict[str, Any]:
 
         # Пробуем начислить валюту через RCON
         try:
-            success = rcon_manager.add_currency_to_player(player_name, game_currency)
+            success, rcon_response = rcon_manager.execute_command(player_name, game_currency)
 
             if success:
                 logger.info(f"✅ Успешно начислено {game_currency} Рин игроку {player_name}")
@@ -174,6 +195,20 @@ def process_new_donation(payload: Dict[str, Any]) -> Dict[str, Any]:
                 }
             else:
                 logger.error(f"❌ Ошибка начисления валюты игроку {player_name}")
+
+                # Отправляем уведомление в Discord
+                discord_notifier.send_error_notification(
+                    player_name=player_name,
+                    amount=amount,
+                    currency=currency,
+                    game_currency=game_currency,
+                    error_reason="Ошибка выполнения RCON команды (проверьте паттерны в конфиге)",
+                    rcon_response=rcon_response,
+                    user_id=user_id,
+                    telegram_user_id=telegram_user_id,
+                    donation_id=donation_id
+                )
+
                 result = {
                     'status': 'error',
                     'reason': 'Ошибка выполнения RCON команды',
@@ -182,6 +217,20 @@ def process_new_donation(payload: Dict[str, Any]) -> Dict[str, Any]:
                 }
         except Exception as e:
             logger.error(f"❌ Исключение при начислении валюты: {e}")
+
+            # Отправляем уведомление в Discord
+            discord_notifier.send_error_notification(
+                player_name=player_name,
+                amount=amount,
+                currency=currency,
+                game_currency=game_currency,
+                error_reason=f"Исключение при подключении к RCON: {str(e)}",
+                rcon_response=None,
+                user_id=user_id,
+                telegram_user_id=telegram_user_id,
+                donation_id=donation_id
+            )
+
             result = {
                 'status': 'error',
                 'reason': f'Исключение: {str(e)}',
