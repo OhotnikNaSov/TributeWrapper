@@ -1,186 +1,30 @@
 {
-    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL -,, https://pterodactyl.io",
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
     "meta": {
         "version": "PTDL_v2",
         "update_url": null
     },
     "exported_at": "2026-02-16T00:00:00+00:00",
     "name": "TributeWrapper",
-    "author": "ohotniknasov@github.com",
-    "description": "Tribute Webhook Server — принимает донаты от Tribute и начисляет игровую валюту в Minecraft через RCON. Автоматическое обновление при каждом запуске.",
+    "author": "parker@parkervcp.com",
+    "description": "Tribute Webhook Server for Minecraft RCON donations.",
     "features": null,
     "docker_images": {
-        "Python 3.12": "ghcr.io/parkervcp/yolks:python_3.12"
+        "Python 3.12": "ghcr.io\/parkervcp\/yolks:python_3.12"
     },
-    "file_denylist": [],
     "startup": "bash start.sh",
     "config": {
         "files": "{}",
-        "startup": "{\"done\": \"Uvicorn running on\", \"userInteraction\": []}",
+        "startup": "{\r\n    \"done\": \"Uvicorn running on\"\r\n}",
         "logs": "{}",
-        "stop": "^^C"
+        "stop": "^C"
     },
     "scripts": {
         "installation": {
-            "script": "#!/bin/bash\napt update -y\napt install -y git curl python3 python3-pip\n\n## check if repo already cloned\nif [ -d /mnt/server/.git ]; then\n    echo \"* Repository exists, pulling updates...\"\n    cd /mnt/server\n    git pull origin main || git pull origin master || true\nelse\n    echo \"* Cloning repository...\"\n    if [ -z \"${GITHUB_REPO}\" ]; then\n        GITHUB_REPO=\"https://github.com/OhotnikNaSov/TributeWrapper.git\"\n    fi\n    git clone ${GITHUB_REPO} /mnt/server\nfi\n\ncd /mnt/server\n\n## create dirs\nmkdir -p logs data\n\n## install python deps\npip install --no-cache-dir -r requirements.txt || python3 -m pip install --no-cache-dir -r requirements.txt\n\n## copy example config if no config exists\nif [ ! -f config.yaml ]; then\n    echo \"* Creating config.yaml from example...\"\n    cp config.yaml.example config.yaml\nfi\n\necho \"* Installation complete\"",
-            "container": "ghcr.io/parkervcp/installers:debian",
+            "script": "#!\/bin\/bash\r\napt update -y\r\napt install -y git curl python3 python3-pip\r\n\r\nmkdir -p \/mnt\/server\r\ncd \/mnt\/server\r\n\r\nif [ -d .git ]; then\r\n    echo -e \"Repository exists, pulling updates...\"\r\n    git pull origin main || git pull origin master || true\r\nelse\r\n    echo -e \"Cloning repository...\"\r\n    git clone https:\/\/github.com\/OhotnikNaSov\/TributeWrapper.git .\r\nfi\r\n\r\nmkdir -p logs data\r\n\r\npip install --no-cache-dir -r requirements.txt || python3 -m pip install --no-cache-dir -r requirements.txt\r\n\r\nif [ ! -f config.yaml ]; then\r\n    echo -e \"Creating config.yaml from example...\"\r\n    cp config.yaml.example config.yaml\r\nfi\r\n\r\necho -e \"install complete\"\r\nexit 0",
+            "container": "python:3.12-slim-bookworm",
             "entrypoint": "bash"
         }
     },
-    "variables": [
-        {
-            "name": "GitHub Repository",
-            "description": "URL репозитория TributeWrapper для клонирования и обновлений.",
-            "env_variable": "GITHUB_REPO",
-            "default_value": "https://github.com/OhotnikNaSov/TributeWrapper.git",
-            "user_viewable": true,
-            "user_editable": true,
-            "rules": "required|string",
-            "sort": 1,
-            "field_type": "text"
-        },
-        {
-            "name": "Tribute API Key",
-            "description": "API ключ от Tribute Dashboard. Будет использован вместо значения в config.yaml.",
-            "env_variable": "TRIBUTE_API_KEY",
-            "default_value": "",
-            "user_viewable": true,
-            "user_editable": true,
-            "rules": "nullable|string",
-            "sort": 2,
-            "field_type": "text"
-        },
-        {
-            "name": "Server Port",
-            "description": "Порт на котором будет запущен webhook-сервер.",
-            "env_variable": "SERVER_PORT",
-            "default_value": "8888",
-            "user_viewable": true,
-            "user_editable": true,
-            "rules": "required|integer|between:1024,65535",
-            "sort": 3,
-            "field_type": "text"
-        },
-        {
-            "name": "RCON Host",
-            "description": "IP адрес Minecraft сервера для RCON подключения.",
-            "env_variable": "RCON_HOST",
-            "default_value": "localhost",
-            "user_viewable": true,
-            "user_editable": true,
-            "rules": "required|string",
-            "sort": 4,
-            "field_type": "text"
-        },
-        {
-            "name": "RCON Port",
-            "description": "Порт RCON Minecraft сервера (стандартный 25575).",
-            "env_variable": "RCON_PORT",
-            "default_value": "25575",
-            "user_viewable": true,
-            "user_editable": true,
-            "rules": "required|integer|between:1,65535",
-            "sort": 5,
-            "field_type": "text"
-        },
-        {
-            "name": "RCON Password",
-            "description": "Пароль RCON из server.properties Minecraft сервера.",
-            "env_variable": "RCON_PASSWORD",
-            "default_value": "",
-            "user_viewable": true,
-            "user_editable": true,
-            "rules": "nullable|string",
-            "sort": 6,
-            "field_type": "text"
-        },
-        {
-            "name": "Donation Name 1",
-            "description": "Название первого доната в Tribute (поле donation_name). При совпадении выполнится Command 1.",
-            "env_variable": "DONATION_NAME_1",
-            "default_value": "Донат 1",
-            "user_viewable": true,
-            "user_editable": true,
-            "rules": "required|string",
-            "sort": 7,
-            "field_type": "text"
-        },
-        {
-            "name": "RCON Command 1",
-            "description": "RCON команда для первого доната. Плейсхолдеры: %player_name%, %amount%",
-            "env_variable": "RCON_COMMAND_1",
-            "default_value": "eco give %player_name% %amount%",
-            "user_viewable": true,
-            "user_editable": true,
-            "rules": "required|string",
-            "sort": 8,
-            "field_type": "text"
-        },
-        {
-            "name": "Donation Name 2",
-            "description": "Название второго доната в Tribute (поле donation_name). При совпадении выполнится Command 2.",
-            "env_variable": "DONATION_NAME_2",
-            "default_value": "Донат 2",
-            "user_viewable": true,
-            "user_editable": true,
-            "rules": "required|string",
-            "sort": 9,
-            "field_type": "text"
-        },
-        {
-            "name": "RCON Command 2",
-            "description": "RCON команда для второго доната. Плейсхолдеры: %player_name%, %amount%",
-            "env_variable": "RCON_COMMAND_2",
-            "default_value": "give %player_name% diamond %amount%",
-            "user_viewable": true,
-            "user_editable": true,
-            "rules": "required|string",
-            "sort": 10,
-            "field_type": "text"
-        },
-        {
-            "name": "Discord Bot Token",
-            "description": "Токен Discord бота. Оставь пустым чтобы отключить бота.",
-            "env_variable": "DISCORD_BOT_TOKEN",
-            "default_value": "",
-            "user_viewable": true,
-            "user_editable": true,
-            "rules": "nullable|string",
-            "sort": 11,
-            "field_type": "text"
-        },
-        {
-            "name": "Discord Guild ID",
-            "description": "ID сервера Discord где бот будет работать.",
-            "env_variable": "DISCORD_GUILD_ID",
-            "default_value": "0",
-            "user_viewable": true,
-            "user_editable": true,
-            "rules": "nullable|string",
-            "sort": 12,
-            "field_type": "text"
-        },
-        {
-            "name": "Discord Channel ID",
-            "description": "ID канала Discord где бот будет принимать команды.",
-            "env_variable": "DISCORD_CHANNEL_ID",
-            "default_value": "0",
-            "user_viewable": true,
-            "user_editable": true,
-            "rules": "nullable|string",
-            "sort": 13,
-            "field_type": "text"
-        },
-        {
-            "name": "Debug Mode",
-            "description": "Включить подробное логирование (true/false).",
-            "env_variable": "SERVER_DEBUG",
-            "default_value": "false",
-            "user_viewable": true,
-            "user_editable": true,
-            "rules": "required|string|in:true,false",
-            "sort": 14,
-            "field_type": "text"
-        }
-    ]
+    "variables": []
 }
