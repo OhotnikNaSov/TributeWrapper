@@ -23,11 +23,11 @@ currency_rates:
 # Поддерживается: mysql, sqlite, mongodb
 tribute_database:
   type: "sqlite"  # mysql, sqlite, mongodb
-  
+
   # SQLite настройки
   sqlite:
     path: "./data/tribute.db"
-  
+
   # MySQL настройки
   mysql:
     host: "localhost"
@@ -35,7 +35,7 @@ tribute_database:
     user: "root"
     password: "your_mysql_password"
     database: "tribute"
-  
+
   # MongoDB настройки
   mongodb:
     host: "localhost"
@@ -75,9 +75,17 @@ minecraft_rcon:
   port: 25575               # RCON порт (стандартный 25575)
   password: "your_rcon_password"  # RCON пароль из server.properties
 
-  # Команда для начисления валюты
-  # Доступные плейсхолдеры: %player_name%, %amount%
-  command: "eco give %player_name% %amount%"
+  # --- Донат 1 ---
+  # donation_name_1 — название доната в Tribute (поле donation_name в payload)
+  # command_1 — RCON команда которая выполнится при совпадении
+  donation_name_1: "Донат 1"
+  command_1: "eco give %player_name% %amount%"
+
+  # --- Донат 2 ---
+  # donation_name_2 — название второго доната в Tribute
+  # command_2 — RCON команда которая выполнится при совпадении
+  donation_name_2: "Донат 2"
+  command_2: "give %player_name% diamond %amount%"
 
   # Паттерны успешного выполнения команды (если хоть один найден = успех)
   # Оставь пустым [] если любой ответ считать успехом
@@ -102,3 +110,23 @@ minecraft_rcon:
 discord:
   # Оставь пустым "" чтобы отключить уведомления
   webhook_url: ""
+
+# --- Настройки Discord бота ---
+discord_bot:
+  # Токен бота (обязательно). Оставь пустым "" чтобы отключить бота
+  token: ""
+
+  # ID гильдии (сервера Discord) — бот будет работать ТОЛЬКО в этой гильдии
+  guild_id: 0
+
+  # ID канала — бот будет принимать команды ТОЛЬКО в этом канале
+  channel_id: 0
+
+  # ID ролей которым разрешено использовать команду /adduser
+  # Можно указать несколько ролей. Пустой список [] = доступ только владельцу гильдии
+  allowed_role_ids:
+    - 12345
+    - 67676767
+
+  # RCON команда для /adduser
+  adduser_command: "adduser %nick% %rp_name% %gender% %quest_link%"

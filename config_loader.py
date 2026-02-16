@@ -28,7 +28,13 @@ def _apply_env_variables(config: Dict[str, Any]) -> Dict[str, Any]:
         'RCON_HOST': ('minecraft_rcon', 'host'),
         'RCON_PORT': ('minecraft_rcon', 'port'),
         'RCON_PASSWORD': ('minecraft_rcon', 'password'),
-        'RCON_COMMAND': ('minecraft_rcon', 'command'),
+        'DONATION_NAME_1': ('minecraft_rcon', 'donation_name_1'),
+        'RCON_COMMAND_1': ('minecraft_rcon', 'command_1'),
+        'DONATION_NAME_2': ('minecraft_rcon', 'donation_name_2'),
+        'RCON_COMMAND_2': ('minecraft_rcon', 'command_2'),
+        'DISCORD_BOT_TOKEN': ('discord_bot', 'token'),
+        'DISCORD_GUILD_ID': ('discord_bot', 'guild_id'),
+        'DISCORD_CHANNEL_ID': ('discord_bot', 'channel_id'),
     }
 
     for env_var, config_path in env_mappings.items():
@@ -45,8 +51,8 @@ def _apply_env_variables(config: Dict[str, Any]) -> Dict[str, Any]:
             last_key = config_path[-1]
 
             # Конвертируем типы данных
-            if last_key == 'port':
-                # Порты должны быть int
+            if last_key in ('port', 'guild_id', 'channel_id'):
+                # Порты и ID должны быть int
                 current[last_key] = int(env_value)
             elif last_key == 'debug':
                 # Debug должен быть bool
@@ -70,7 +76,10 @@ def load_config(config_path: str = "config.yaml") -> Dict[str, Any]:
     - RCON_HOST: minecraft_rcon.host
     - RCON_PORT: minecraft_rcon.port
     - RCON_PASSWORD: minecraft_rcon.password
-    - RCON_COMMAND: minecraft_rcon.command
+    - DONATION_NAME_1: minecraft_rcon.donation_name_1
+    - RCON_COMMAND_1: minecraft_rcon.command_1
+    - DONATION_NAME_2: minecraft_rcon.donation_name_2
+    - RCON_COMMAND_2: minecraft_rcon.command_2
 
     Args:
         config_path: Путь к файлу конфигурации
@@ -108,21 +117,36 @@ def load_config(config_path: str = "config.yaml") -> Dict[str, Any]:
 
     # Проверяем настройки RCON
     rcon_config = config['minecraft_rcon']
-    required_rcon_fields = ['host', 'port', 'password', 'command']
+    required_rcon_fields = ['host', 'port', 'password', 'donation_name_1', 'command_1', 'donation_name_2', 'command_2']
 
     for field in required_rcon_fields:
         if field not in rcon_config:
             raise ValueError(f"Отсутствует обязательное поле в minecraft_rcon: {field}")
 
-    # Проверяем что команда содержит плейсхолдеры
-    command = rcon_config['command']
-    if '%player_name%' not in command or '%amount%' not in command:
-        raise ValueError("Команда RCON должна содержать плейсхолдеры %player_name% и %amount%")
+    # Проверяем что команды содержат плейсхолдеры
+    for cmd_key in ('command_1', 'command_2'):
+        command = rcon_config[cmd_key]
+        if '%player_name%' not in command or '%amount%' not in command:
+            raise ValueError(f"Команда RCON ({cmd_key}) должна содержать плейсхолдеры %player_name% и %amount%")
 
     # Проверяем что пароль не дефолтный (если не задан через env)
     rcon_password = rcon_config['password']
     if rcon_password in ('your_rcon_password', 'YOUR_RCON_PASSWORD', '', None):
         if not os.getenv('RCON_PASSWORD'):
             raise ValueError("Необходимо указать реальный RCON пароль в config.yaml или RCON_PASSWORD!")
+
+    # Проверяем настройки Discord бота (если секция есть и токен указан)
+    bot_config = config.get('discord_bot', {})
+    bot_token = bot_config.get('token', '')
+    if bot_token and bot_token.strip():
+        # Токен указан — проверяем обязательные поля
+        guild_id = bot_config.get('guild_id', 0)
+        channel_id = bot_config.get('channel_id', 0)
+        if not guild_id or guild_id == 0:
+            raise ValueError("discord_bot.guild_id обязателен когда токен бота указан!")
+        if not channel_id or channel_id == 0:
+            raise ValueError("discord_bot.channel_id обязателен когда токен бота указан!")
+        if 'adduser_command' not in bot_config or not bot_config['adduser_command']:
+            raise ValueError("discord_bot.adduser_command обязателен когда токен бота указан!")
 
     return config

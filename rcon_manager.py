@@ -25,7 +25,13 @@ class RconManager:
         self.host = self.rcon_config['host']
         self.port = self.rcon_config['port']
         self.password = self.rcon_config['password']
-        self.command_template = self.rcon_config['command']
+
+        # Два доната — два шаблона команд
+        self.donation_name_1 = self.rcon_config['donation_name_1']
+        self.command_template_1 = self.rcon_config['command_1']
+        self.donation_name_2 = self.rcon_config['donation_name_2']
+        self.command_template_2 = self.rcon_config['command_2']
+
         self.success_patterns = self.rcon_config.get('success_patterns', [])
         self.error_patterns = self.rcon_config.get('error_patterns', [])
 
@@ -54,19 +60,46 @@ class RconManager:
 
         return text
 
-    def execute_command(self, player_name: str, amount: int) -> Tuple[bool, str]:
+    def get_command_for_donation(self, donation_name: str) -> Optional[str]:
+        """
+        Возвращает шаблон команды по названию доната
+
+        Args:
+            donation_name: Название доната из Tribute (donation_name)
+
+        Returns:
+            Шаблон команды или None если донат не найден
+        """
+        if donation_name == self.donation_name_1:
+            self.logger.debug(f"🎯 Донат совпал с donation_name_1: '{self.donation_name_1}' → command_1")
+            return self.command_template_1
+        elif donation_name == self.donation_name_2:
+            self.logger.debug(f"🎯 Донат совпал с donation_name_2: '{self.donation_name_2}' → command_2")
+            return self.command_template_2
+        else:
+            self.logger.error(f"❌ Донат '{donation_name}' не совпадает ни с одним из настроенных: "
+                            f"'{self.donation_name_1}', '{self.donation_name_2}'")
+            return None
+
+    def execute_command(self, player_name: str, amount: int, donation_name: str = "") -> Tuple[bool, str]:
         """
         Выполняет команду начисления валюты через RCON
 
         Args:
             player_name: Имя игрока
             amount: Количество валюты для начисления
+            donation_name: Название доната из Tribute для выбора команды
 
         Returns:
             Tuple[bool, str]: (успех, ответ сервера)
         """
+        # Выбираем команду по названию доната
+        command_template = self.get_command_for_donation(donation_name)
+        if command_template is None:
+            return False, f"Неизвестный донат: '{donation_name}'"
+
         # Подставляем плейсхолдеры в команду
-        command = self.command_template.replace('%player_name%', player_name)
+        command = command_template.replace('%player_name%', player_name)
         command = command.replace('%amount%', str(amount))
 
         self.logger.debug(f"🎮 Выполнение RCON команды: {command}")
@@ -160,20 +193,21 @@ class RconManager:
         result = result.replace('{amount}', str(amount))
         return result
 
-    def add_currency_to_player(self, player_name: str, amount: int) -> bool:
+    def add_currency_to_player(self, player_name: str, amount: int, donation_name: str = "") -> bool:
         """
         Начисляет валюту игроку через RCON
 
         Args:
             player_name: Имя игрока
             amount: Количество валюты для начисления
+            donation_name: Название доната из Tribute
 
         Returns:
             True если успешно, False если ошибка
         """
-        self.logger.debug(f"💰 Начисление {amount} валюты игроку {player_name} через RCON")
+        self.logger.debug(f"💰 Начисление {amount} валюты игроку {player_name} через RCON (донат: '{donation_name}')")
 
-        success, response = self.execute_command(player_name, amount)
+        success, response = self.execute_command(player_name, amount, donation_name)
 
         if success:
             self.logger.info(f"✅ RCON: Успешно начислено {amount} валюты игроку {player_name}")

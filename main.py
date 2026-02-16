@@ -6,6 +6,8 @@ Tribute Webhook Server
 import hmac
 import hashlib
 import json
+import asyncio
+import threading
 from datetime import datetime
 from typing import Dict, Any
 from fastapi import FastAPI, Request, HTTPException, status
@@ -17,6 +19,7 @@ from database import DatabaseManager
 from rcon_manager import RconManager
 from logger import Logger
 from discord_notifier import DiscordNotifier
+from discord_bot import TributeDiscordBot
 
 # Загружаем конфигурацию
 config = load_config()
@@ -138,13 +141,15 @@ def process_new_donation(payload: Dict[str, Any]) -> Dict[str, Any]:
     
     # Извлекаем данные
     donation_id = payload.get('donation_request_id')
+    donation_name = payload.get('donation_name', '')
     message = payload.get('message', '')
     amount = payload.get('amount', 0)
     currency = payload.get('currency', '')
     user_id = payload.get('user_id')
     telegram_user_id = payload.get('telegram_user_id')
-    
+
     logger.debug(f"📋 ID доната: {donation_id}")
+    logger.debug(f"📋 Название доната: '{donation_name}'")
     logger.debug(f"📋 User ID: {user_id}")
     logger.debug(f"📋 Telegram ID: {telegram_user_id}")
     logger.debug(f"📋 Сумма: {amount} {currency}")
@@ -153,7 +158,31 @@ def process_new_donation(payload: Dict[str, Any]) -> Dict[str, Any]:
     # Извлекаем имя игрока
     player_name = extract_player_name(message)
     
-    if not player_name:
+    # Проверяем что donation_name совпадает с одним из настроенных
+    matched_command = rcon_manager.get_command_for_donation(donation_name)
+    if matched_command is None:
+        logger.error(f"❌ Донат '{donation_name}' не совпадает ни с одним из настроенных")
+
+        discord_notifier.send_error_notification(
+            player_name=None,
+            amount=amount,
+            currency=currency,
+            game_currency=0,
+            error_reason=f"Неизвестное название доната: '{donation_name}'. "
+                        f"Настроены: '{rcon_manager.donation_name_1}', '{rcon_manager.donation_name_2}'",
+            rcon_response=None,
+            user_id=user_id,
+            telegram_user_id=telegram_user_id,
+            donation_id=donation_id
+        )
+
+        result = {
+            'status': 'error',
+            'reason': f"Неизвестное название доната: '{donation_name}'",
+            'player_name': None,
+            'game_currency': 0
+        }
+    elif not player_name:
         logger.error("❌ Не удалось извлечь имя игрока из сообщения")
 
         # Отправляем уведомление в Discord
@@ -183,7 +212,7 @@ def process_new_donation(payload: Dict[str, Any]) -> Dict[str, Any]:
 
         # Пробуем начислить валюту через RCON
         try:
-            success, rcon_response = rcon_manager.execute_command(player_name, game_currency)
+            success, rcon_response = rcon_manager.execute_command(player_name, game_currency, donation_name)
 
             if success:
                 logger.info(f"✅ Успешно начислено {game_currency} Рин игроку {player_name}")
@@ -361,16 +390,49 @@ async def health():
     return {"status": "healthy"}
 
 
-if __name__ == "__main__":
-    logger.info("🚀 Запуск Tribute Webhook Server")
-    logger.info(f"🌐 Host: {config['server']['host']}")
-    logger.info(f"🔌 Port: {config['server']['port']}")
-    logger.info(f"🐛 Debug: {config['server']['debug']}")
-    logger.info("=" * 60)
-    
+# --- Инициализация Discord бота ---
+bot_config = config.get('discord_bot', {})
+bot_token = bot_config.get('token', '')
+discord_bot_enabled = bool(bot_token and bot_token.strip())
+discord_bot_instance = None
+
+if discord_bot_enabled:
+    discord_bot_instance = TributeDiscordBot(config, logger)
+    logger.info("[Discord Bot] Бот сконфигурирован и будет запущен")
+else:
+    logger.info("[Discord Bot] Бот отключён (токен не указан)")
+
+
+def run_uvicorn():
+    """Запускает uvicorn в отдельном потоке"""
     uvicorn.run(
         app,
         host=config['server']['host'],
         port=config['server']['port'],
         log_level="debug" if config['server']['debug'] else "info"
     )
+
+
+if __name__ == "__main__":
+    logger.info("🚀 Запуск Tribute Webhook Server")
+    logger.info(f"🌐 Host: {config['server']['host']}")
+    logger.info(f"🔌 Port: {config['server']['port']}")
+    logger.info(f"🐛 Debug: {config['server']['debug']}")
+    logger.info("=" * 60)
+
+    if discord_bot_enabled:
+        # Запускаем uvicorn в отдельном daemon-потоке
+        uvicorn_thread = threading.Thread(target=run_uvicorn, daemon=True)
+        uvicorn_thread.start()
+        logger.info("[Discord Bot] Запуск Discord бота...")
+
+        # Discord бот занимает основной event loop
+        discord_bot_instance.run(bot_token)
+    else:
+        # Без бота — просто запускаем uvicorn
+        uvicorn.run(
+            app,
+            host=config['server']['host'],
+            port=config['server']['port'],
+            log_level="debug" if config['server']['debug'] else "info"
+        )
