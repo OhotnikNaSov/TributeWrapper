@@ -123,12 +123,6 @@ def load_config(config_path: str = "config.yaml") -> Dict[str, Any]:
         if field not in rcon_config:
             raise ValueError(f"Отсутствует обязательное поле в minecraft_rcon: {field}")
 
-    # Проверяем что команды содержат плейсхолдеры
-    for cmd_key in ('command_1', 'command_2'):
-        command = rcon_config[cmd_key]
-        if '%player_name%' not in command or '%amount%' not in command:
-            raise ValueError(f"Команда RCON ({cmd_key}) должна содержать плейсхолдеры %player_name% и %amount%")
-
     # Проверяем что пароль не дефолтный (если не задан через env)
     rcon_password = rcon_config['password']
     if rcon_password in ('your_rcon_password', 'YOUR_RCON_PASSWORD', '', None):
