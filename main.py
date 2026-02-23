@@ -7,7 +7,6 @@ import hmac
 import hashlib
 import json
 import asyncio
-import threading
 from datetime import datetime
 from typing import Dict, Any
 from fastapi import FastAPI, Request, HTTPException, status
@@ -403,16 +402,6 @@ else:
     logger.info("[Discord Bot] Бот отключён (токен не указан)")
 
 
-def run_uvicorn():
-    """Запускает uvicorn в отдельном потоке"""
-    uvicorn.run(
-        app,
-        host=config['server']['host'],
-        port=config['server']['port'],
-        log_level="debug" if config['server']['debug'] else "info"
-    )
-
-
 if __name__ == "__main__":
     logger.info("🚀 Запуск Tribute Webhook Server")
     logger.info(f"🌐 Host: {config['server']['host']}")
@@ -421,15 +410,22 @@ if __name__ == "__main__":
     logger.info("=" * 60)
 
     if discord_bot_enabled:
-        # Запускаем uvicorn в отдельном daemon-потоке
-        uvicorn_thread = threading.Thread(target=run_uvicorn, daemon=True)
-        uvicorn_thread.start()
-        logger.info("[Discord Bot] Запуск Discord бота...")
+        async def run_all():
+            uv_config = uvicorn.Config(
+                app,
+                host=config['server']['host'],
+                port=config['server']['port'],
+                log_level="debug" if config['server']['debug'] else "info"
+            )
+            server = uvicorn.Server(uv_config)
+            logger.info("[Discord Bot] Запуск Discord бота...")
+            await asyncio.gather(
+                server.serve(),
+                discord_bot_instance.start(bot_token)
+            )
 
-        # Discord бот занимает основной event loop
-        discord_bot_instance.run(bot_token)
+        asyncio.run(run_all())
     else:
-        # Без бота — просто запускаем uvicorn
         uvicorn.run(
             app,
             host=config['server']['host'],
