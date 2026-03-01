@@ -52,8 +52,9 @@ class TributeDiscordBot(discord.Client):
         @app_commands.describe(
             nick="Ник игрока на сервере",
             rp_name="РП имя (используйте _ вместо пробела)",
+            race="Раса персонажа",
             gender="Пол персонажа",
-            quest_link="Ссылка на квенту в Discord"
+            quest_link="Ссылка на сообщение с квентой в архиве"
         )
         @app_commands.choices(gender=[
             app_commands.Choice(name="Мужской", value="male"),
@@ -63,10 +64,11 @@ class TributeDiscordBot(discord.Client):
             interaction: discord.Interaction,
             nick: str,
             rp_name: str,
+            race: str,
             gender: app_commands.Choice[str],
             quest_link: str
         ):
-            await self._handle_adduser(interaction, nick, rp_name, gender.value, quest_link)
+            await self._handle_adduser(interaction, nick, rp_name, race, gender.value, quest_link)
 
     def _check_access(self, interaction: discord.Interaction) -> Optional[str]:
         """
@@ -120,12 +122,13 @@ class TributeDiscordBot(discord.Client):
         interaction: discord.Interaction,
         nick: str,
         rp_name: str,
+        race: str,
         gender: str,
         quest_link: str
     ):
         """Обработчик команды /adduser"""
         self.logger.debug(f"[Discord Bot] /adduser от {interaction.user} (ID: {interaction.user.id})")
-        self.logger.debug(f"[Discord Bot] Параметры: nick={nick}, rp_name={rp_name}, gender={gender}, quest_link={quest_link}")
+        self.logger.debug(f"[Discord Bot] Параметры: nick={nick}, rp_name={rp_name}, race={race}, gender={gender}, quest_link={quest_link}")
 
         # Проверяем доступ
         deny_reason = self._check_access(interaction)
@@ -141,6 +144,7 @@ class TributeDiscordBot(discord.Client):
         command = self.adduser_command_template
         command = command.replace('%nick%', nick)
         command = command.replace('%rp_name%', rp_name)
+        command = command.replace('%race%', race)
         command = command.replace('%gender%', gender)
         command = command.replace('%quest_link%', quest_link)
 

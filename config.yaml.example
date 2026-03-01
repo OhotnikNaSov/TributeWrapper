@@ -129,4 +129,5 @@ discord_bot:
     - 67676767
 
   # RCON команда для /adduser
-  adduser_command: "adduser %nick% %rp_name% %gender% %quest_link%"
+  # Плейсхолдеры: %nick% %rp_name% %race% %gender% %quest_link%
+  adduser_command: "adduser %nick% %rp_name% %race% %gender% %quest_link%"
