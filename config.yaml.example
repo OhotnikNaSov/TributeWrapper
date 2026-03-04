@@ -131,3 +131,21 @@ discord_bot:
   # RCON команда для /adduser
   # Плейсхолдеры: %nick% %rp_name% %race% %gender% %quest_link%
   adduser_command: "adduser %nick% %rp_name% %race% %gender% %quest_link%"
+
+  # Варианты пола для команды /adduser (максимум 25)
+  # name — отображается в Discord, value — передаётся в команду
+  genders:
+    - name: "Мужской"
+      value: "male"
+    - name: "Женский"
+      value: "female"
+
+  # Варианты расы для команды /adduser (максимум 25)
+  # name — отображается в Discord, value — передаётся в команду
+  races:
+    - name: "Человек"
+      value: "human"
+    - name: "Эльф"
+      value: "elf"
+    - name: "Орк"
+      value: "orc"

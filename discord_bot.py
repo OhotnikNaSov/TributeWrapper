@@ -44,6 +44,19 @@ class TributeDiscordBot(discord.Client):
         """Регистрирует slash-команды бота"""
         guild_obj = discord.Object(id=self.guild_id)
 
+        # Строим список вариантов пола из конфига (с дефолтом на случай отсутствия)
+        raw_genders = self.bot_config.get('genders', [
+            {'name': 'Мужской', 'value': 'male'},
+            {'name': 'Женский', 'value': 'female'},
+        ])
+        gender_choices = [app_commands.Choice(name=g['name'], value=g['value']) for g in raw_genders]
+
+        # Строим список вариантов расы из конфига (с дефолтом на случай отсутствия)
+        raw_races = self.bot_config.get('races', [
+            {'name': 'Человек', 'value': 'human'},
+        ])
+        race_choices = [app_commands.Choice(name=r['name'], value=r['value']) for r in raw_races]
+
         @self.tree.command(
             name="adduser",
             description="Добавить пользователя на сервер через RCON",
@@ -56,19 +69,16 @@ class TributeDiscordBot(discord.Client):
             gender="Пол персонажа",
             quest_link="Ссылка на сообщение с квентой в архиве"
         )
-        @app_commands.choices(gender=[
-            app_commands.Choice(name="Мужской", value="male"),
-            app_commands.Choice(name="Женский", value="female"),
-        ])
+        @app_commands.choices(gender=gender_choices, race=race_choices)
         async def adduser_command(
             interaction: discord.Interaction,
             nick: str,
             rp_name: str,
-            race: str,
+            race: app_commands.Choice[str],
             gender: app_commands.Choice[str],
             quest_link: str
         ):
-            await self._handle_adduser(interaction, nick, rp_name, race, gender.value, quest_link)
+            await self._handle_adduser(interaction, nick, rp_name, race.value, gender.value, quest_link)
 
     def _check_access(self, interaction: discord.Interaction) -> Optional[str]:
         """
