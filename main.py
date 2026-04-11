@@ -144,12 +144,12 @@ def process_new_donation(payload: Dict[str, Any]) -> Dict[str, Any]:
     message = payload.get('message', '')
     amount = payload.get('amount', 0)
     currency = payload.get('currency', '')
-    user_id = payload.get('user_id')
+    trb_user_id = payload.get('trb_user_id')
     telegram_user_id = payload.get('telegram_user_id')
 
     logger.debug(f"📋 ID доната: {donation_id}")
     logger.debug(f"📋 Название доната: '{donation_name}'")
-    logger.debug(f"📋 User ID: {user_id}")
+    logger.debug(f"📋 TRB User ID: {trb_user_id}")
     logger.debug(f"📋 Telegram ID: {telegram_user_id}")
     logger.debug(f"📋 Сумма: {amount} {currency}")
     logger.debug(f"📋 Сообщение: '{message}'")
@@ -170,7 +170,7 @@ def process_new_donation(payload: Dict[str, Any]) -> Dict[str, Any]:
             error_reason=f"Неизвестное название доната: '{donation_name}'. "
                         f"Настроены: '{rcon_manager.donation_name_1}', '{rcon_manager.donation_name_2}'",
             rcon_response=None,
-            user_id=user_id,
+            trb_user_id=trb_user_id,
             telegram_user_id=telegram_user_id,
             donation_id=donation_id
         )
@@ -192,7 +192,7 @@ def process_new_donation(payload: Dict[str, Any]) -> Dict[str, Any]:
             game_currency=0,
             error_reason="Не указано имя игрока в сообщении доната",
             rcon_response=None,
-            user_id=user_id,
+            trb_user_id=trb_user_id,
             telegram_user_id=telegram_user_id,
             donation_id=donation_id
         )
@@ -232,7 +232,7 @@ def process_new_donation(payload: Dict[str, Any]) -> Dict[str, Any]:
                     game_currency=game_currency,
                     error_reason="Ошибка выполнения RCON команды (проверьте паттерны в конфиге)",
                     rcon_response=rcon_response,
-                    user_id=user_id,
+                    trb_user_id=trb_user_id,
                     telegram_user_id=telegram_user_id,
                     donation_id=donation_id
                 )
@@ -254,7 +254,7 @@ def process_new_donation(payload: Dict[str, Any]) -> Dict[str, Any]:
                 game_currency=game_currency,
                 error_reason=f"Исключение при подключении к RCON: {str(e)}",
                 rcon_response=None,
-                user_id=user_id,
+                trb_user_id=trb_user_id,
                 telegram_user_id=telegram_user_id,
                 donation_id=donation_id
             )

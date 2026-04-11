@@ -36,7 +36,7 @@ class DiscordNotifier:
         game_currency: int,
         error_reason: str,
         rcon_response: Optional[str] = None,
-        user_id: Optional[str] = None,
+        trb_user_id: Optional[str] = None,
         telegram_user_id: Optional[str] = None,
         donation_id: Optional[str] = None
     ):
@@ -50,7 +50,7 @@ class DiscordNotifier:
             game_currency: Конвертированная игровая валюта (Рины)
             error_reason: Причина ошибки
             rcon_response: Ответ от RCON сервера (если был)
-            user_id: User ID из Tribute
+            trb_user_id: Единый идентификатор пользователя Tribute (trb_user_id)
             telegram_user_id: Telegram ID донатера
             donation_id: ID доната
         """
@@ -104,10 +104,10 @@ class DiscordNotifier:
                     "inline": True
                 })
 
-            # User ID и Telegram ID
+            # TRB User ID и Telegram ID
             user_info = []
-            if user_id:
-                user_info.append(f"User ID: `{user_id}`")
+            if trb_user_id:
+                user_info.append(f"TRB User ID: `{trb_user_id}`")
             if telegram_user_id:
                 user_info.append(f"Telegram: `{telegram_user_id}`")
             if donation_id:
